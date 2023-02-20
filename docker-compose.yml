@@ -1,0 +1,51 @@
+version: "3"
+name: php-setup
+services:
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+    image: nginx:alpine
+    ports:
+      - "8081:80"
+      - "8082:81"
+    networks:
+      - internal
+    volumes:
+      - ./data/:/var/www/html/
+      - ./logs/nginx:/var/log/nginx/
+  php:
+      build:
+        context: .
+        dockerfile: php/Dockerfile
+      image: php:8.1.16-fpm
+      networks:
+        - internal
+      volumes:
+        - ./data/:/var/www/html/
+        - ./logs/php.log:/var/log/fpm-php.www.log
+  db:
+    image: mysql:8.0.32
+    container_name: db
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "3301:3306"
+    environment:
+      SERVICE_TAGS: dev
+      SERVICE_NAME: mysql
+      MYSQL_DATABASE: test_db
+      MYSQL_USER: adeardian
+      MYSQL_PASSWORD: adeardian
+      MYSQL_ROOT_PASSWORD: adeardian
+    networks:
+      - internal
+    volumes:
+      - dbdata:/var/lib/mysql/
+      - ./mysql/my.cnf:/etc/mysql/my.cnf
+volumes:
+  dbdata:
+    driver: local
+networks:
+  internal:
+    driver: bridge
